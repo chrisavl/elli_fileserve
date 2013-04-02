@@ -62,9 +62,17 @@ unprefix(RawPath, Prefix) ->
             undefined
     end.
 
+local_path(MappedPath, <<>>) ->
+    filename:join(filename:flatten([MappedPath, <<"index.html">>]));
 local_path(MappedPath, FilePath) ->
     case binary:match(filename:dirname(FilePath), <<"..">>) of
-        nomatch -> filename:join(filename:flatten([MappedPath, FilePath]));
+        nomatch ->
+            case binary:last(FilePath) of
+                $/ ->
+                    filename:join(filename:flatten([MappedPath, FilePath, <<"index.html">>]));
+                _ ->
+                    filename:join(filename:flatten([MappedPath, FilePath]))
+            end;
         _       -> undefined
     end.
 
