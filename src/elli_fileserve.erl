@@ -86,7 +86,7 @@ file_size(Filename) ->
             {ok, Size};
         {error, Reason} ->
             {error, Reason};
-        _ -> 
+        _ ->
             {error, invalid_file}
     end.
 
