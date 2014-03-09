@@ -22,7 +22,7 @@ handle(Req, Config) ->
         undefined ->
             ignore;
         FilePath ->
-            Filename = local_path(path(Config), FilePath),
+            Filename = local_path(Config, FilePath),
             case file_size(Filename) of
                 {error, illegal_path} ->
                     {403, [], <<"Not Allowed">>};
@@ -40,12 +40,14 @@ handle_event(_, _, _) ->
 %% Config
 %% 
 
+default(Config) ->
+    proplists:get_value(default, Config, <<"index.html">>).
+
 path(Config) ->
     proplists:get_value(path, Config, <<"/tmp">>).
 
 prefix(Config) ->
     proplists:get_value(prefix, Config, <<>>).
-
 
 %%
 %% Helpers
@@ -62,7 +64,12 @@ unprefix(RawPath, Prefix) ->
             undefined
     end.
 
-local_path(MappedPath, FilePath) ->
+
+local_path(Config, <<"">>) ->
+    filename:join(filename:flatten([path(Config), default(Config)]));
+
+local_path(Config, FilePath) ->
+    MappedPath = path(Config),
     case binary:match(filename:dirname(FilePath), <<"..">>) of
         nomatch -> filename:join(filename:flatten([MappedPath, FilePath]));
         _       -> undefined
