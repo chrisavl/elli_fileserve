@@ -7,9 +7,9 @@
 handle_test() ->
     meck:new(elli_request),
     lists:foreach(fun test_for_prefix/1,
-                  [<<"/prefix">>, <<"/prefix/">>, {regex, "^/p.+x/"}]),
+                  [<<"/prefix">>, <<"/prefix/">>, {regex, <<"^/p.+x/">>}]),
     lists:foreach(fun test_for_regex_prefix/1,
-                  [".+/assets", ".+/assets/", "/[^/]+/[^/]+/assets/"]),
+                  [<<".+/assets">>, <<".+/assets/">>, <<"/[^/]+/[^/]+/assets/">>]),
     meck:unload(elli_request).
 
 test_for_prefix(Prefix) ->

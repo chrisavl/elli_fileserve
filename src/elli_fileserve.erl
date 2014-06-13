@@ -53,13 +53,12 @@ prefix(Config) ->
 %% Helpers
 %%
 
-unprefix(RawPath, {regex, Prefix}) when is_list(Prefix) ->
-    PathStr = binary_to_list(RawPath),
-    case re:run(PathStr, Prefix, [global, {capture, all, list}]) of
+unprefix(RawPath, {regex, Prefix}) ->
+    case re:run(RawPath, Prefix, [{capture, all, binary}]) of
         nomatch ->
             undefined;
-        _Else ->
-            case re:replace(PathStr, Prefix, "", [global, {return, binary}]) of
+        _Result ->
+            case re:replace(RawPath, Prefix, "", [{return, binary}]) of
                 <<$/, File/binary>> ->
                     File;
                 Else ->
