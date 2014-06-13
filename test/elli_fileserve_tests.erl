@@ -3,11 +3,26 @@
 
 -define(TEST_DIR, (filename:absname(<<".">>))).
 -define(TEST_FILE, (filename:basename(list_to_binary(?FILE)))).
+-define(TEST(FunName, Arg), {lists:flatten(io_lib:format("~s ~p", [FunName, Arg])), ?_test(FunName(Arg))}).
 
-handle_test() ->
-    meck:new(elli_request),
-    lists:foreach(fun test_for_prefix/1, [<<"/prefix">>, <<"/prefix/">>]),
+test_setup() ->
+    meck:new(elli_request).
+
+test_teardown(_) ->
     meck:unload(elli_request).
+
+handle_test_() ->
+    [{setup, local,
+      fun test_setup/0,
+      fun test_teardown/1,
+      [?TEST(test_for_prefix, <<"/prefix">>),
+       ?TEST(test_for_prefix, <<"/prefix/">>),
+       ?TEST(test_for_prefix, {regex, <<"^/p.+x/">>}),
+       ?TEST(test_for_regex_prefix, <<".+/assets">>),
+       ?TEST(test_for_regex_prefix, <<".+/assets/">>),
+       ?TEST(test_for_regex_prefix, <<"/[^/]+/[^/]+/assets/">>)
+       ]
+     }].
 
 test_for_prefix(Prefix) ->
     Config = [{path, ?TEST_DIR}, {prefix, Prefix}],
@@ -26,6 +41,14 @@ test_for_prefix(Prefix) ->
     meck:expect(elli_request, raw_path, 1, <<"/other/prefix/file.ext">>),
     ?assertEqual(ignore, elli_fileserve:handle(req, Config)).
 
+
+test_for_regex_prefix(Prefix) ->
+    Config = [{path, ?TEST_DIR}, {prefix, {regex, Prefix}}],
+
+    meck:expect(elli_request, raw_path, 1, <<"/deep/link/assets/", ?TEST_FILE/binary>>),
+    ExpectedFile = filename:join([?TEST_DIR, ?TEST_FILE]),
+    ?assertMatch({200, [{"Content-Length", _}], {file, ExpectedFile}},
+                 elli_fileserve:handle(req, Config)).
 
 mime_type_test() ->
     ?assertEqual("text/plain", elli_fileserve:mime_type(<<"/some/file.txt">>)),

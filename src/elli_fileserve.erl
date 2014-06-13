@@ -53,6 +53,19 @@ prefix(Config) ->
 %% Helpers
 %%
 
+unprefix(RawPath, {regex, Prefix}) ->
+    case re:run(RawPath, Prefix, [{capture, all, binary}]) of
+        nomatch ->
+            undefined;
+        _Result ->
+            case re:replace(RawPath, Prefix, "", [{return, binary}]) of
+                <<$/, File/binary>> ->
+                    File;
+                Else ->
+                    Else
+            end
+    end;
+
 unprefix(RawPath, Prefix) ->
     PrefixSz = size(Prefix),
     case RawPath of
