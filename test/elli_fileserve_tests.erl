@@ -4,14 +4,26 @@
 -define(TEST_DIR, (filename:absname(<<".">>))).
 -define(TEST_FILE, (filename:basename(list_to_binary(?FILE)))).
 
-handle_test() ->
-    meck:new(elli_request),
-    lists:foreach(fun test_for_prefix/1,
-                  [<<"/prefix">>, <<"/prefix/">>, {regex, <<"^/p.+x/">>}]),
-    lists:foreach(fun test_for_regex_prefix/1,
-                  [<<".+/assets">>, <<".+/assets/">>, <<"/[^/]+/[^/]+/assets/">>]),
+test_setup() ->
+    meck:new(elli_request).
+
+test_teardown(_) ->
     meck:unload(elli_request).
 
+handle_test_() ->
+    [{setup, local,
+      fun test_setup/0,
+      fun test_teardown/1,
+      [fun test_prefix/0,
+       fun test_regex_prefix/0]}].
+
+test_prefix() ->
+    lists:foreach(fun test_for_prefix/1,
+                  [<<"/prefix">>, <<"/prefix/">>, {regex, <<"^/p.+x/">>}]).
+
+test_regex_prefix() ->
+    lists:foreach(fun test_for_regex_prefix/1,
+                  [<<".+/assets">>, <<".+/assets/">>, <<"/[^/]+/[^/]+/assets/">>]).
 test_for_prefix(Prefix) ->
     Config = [{path, ?TEST_DIR}, {prefix, Prefix}],
 
