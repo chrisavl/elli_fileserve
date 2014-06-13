@@ -21,6 +21,23 @@ start_link() ->
                      {callback_args, Config}]).
 ```
 
+## Dynamic prefixes using regex
+
+If your prefix is dynamic, use regular expressions to match it. The following example matches all pathes that contain `/assets` somewhere.
+
+```erlang
+FileserveConfig = [{prefix, {regex, <<".+/assets">>}},
+                   {path, <<"/www">>}],
+```
+
+Resolves to:
+
+| Path | Result |
+|------|--------|
+| `/foo/assets/file.zip` | `/www/file.zip` |
+| `/bar/assets/file.zip` | `/www/file.zip` |
+| `/assets/file.zip` | `ignore` |
+
 # TODO
 
  * Serve index.htm(l) files for /-requests if available
