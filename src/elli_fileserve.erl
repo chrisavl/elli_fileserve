@@ -38,7 +38,7 @@ handle_event(_, _, _) ->
 
 %%
 %% Config
-%% 
+%%
 
 default(Config) ->
     proplists:get_value(default, Config, <<"index.html">>).
@@ -73,7 +73,8 @@ local_path(Config, FilePath) ->
         nomatch ->
             case binary:last(FilePath) of
                 $/ ->
-                    filename:join(filename:flatten([MappedPath, FilePath, <<"index.html">>]));
+                    filename:join(filename:flatten([MappedPath, FilePath,
+                                                    default(Config)]));
                 _ ->
                     filename:join(filename:flatten([MappedPath, FilePath]))
             end;

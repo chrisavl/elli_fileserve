@@ -30,3 +30,25 @@ test_for_prefix(Prefix) ->
 mime_type_test() ->
     ?assertEqual("text/plain", elli_fileserve:mime_type(<<"/some/file.txt">>)),
     ?assertEqual(undefined, elli_fileserve:mime_type(<<"/no/file/extension">>)).
+
+
+local_path_test_() ->
+    [{"Should return file asked for",
+      ?_assertEqual(<<"/test/css/main.css">>,
+                    elli_fileserve:local_path([{path, <<"/test">>}],
+                                              <<"css/main.css">>))},
+     {"Should return default file on empty path",
+      ?_assertEqual(<<"/test/index.xhtml">>,
+                    elli_fileserve:local_path([{path, <<"/test">>},
+                                               {default, <<"index.xhtml">>}],
+                                              <<"">>))},
+     {"Should return default file if asked for directory",
+      ?_assertEqual(<<"/test/static/index.xhtml">>,
+                    elli_fileserve:local_path([{path, <<"/test">>},
+                                               {default, <<"index.xhtml">>}],
+                                              <<"static/">>))},
+     {"Should not allow 'parent directories' in path",
+      ?_assertEqual(undefined,
+                    elli_fileserve:local_path([{path, <<"/test/">>},
+                                               {default, <<"index.xhtml">>}],
+                                              <<"../">>))}].
