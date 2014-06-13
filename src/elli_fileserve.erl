@@ -38,7 +38,7 @@ handle_event(_, _, _) ->
 
 %%
 %% Config
-%% 
+%%
 
 default(Config) ->
     proplists:get_value(default, Config, <<"index.html">>).
@@ -64,14 +64,20 @@ unprefix(RawPath, Prefix) ->
             undefined
     end.
 
-
 local_path(Config, <<"">>) ->
     filename:join(filename:flatten([path(Config), default(Config)]));
 
 local_path(Config, FilePath) ->
     MappedPath = path(Config),
     case binary:match(filename:dirname(FilePath), <<"..">>) of
-        nomatch -> filename:join(filename:flatten([MappedPath, FilePath]));
+        nomatch ->
+            case binary:last(FilePath) of
+                $/ ->
+                    filename:join(filename:flatten([MappedPath, FilePath,
+                                                    default(Config)]));
+                _ ->
+                    filename:join(filename:flatten([MappedPath, FilePath]))
+            end;
         _       -> undefined
     end.
 
@@ -85,7 +91,7 @@ file_size(Filename) ->
             {ok, Size};
         {error, Reason} ->
             {error, Reason};
-        _ -> 
+        _ ->
             {error, invalid_file}
     end.
 
