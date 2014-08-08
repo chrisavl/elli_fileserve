@@ -12,6 +12,9 @@
 
 -export([handle/2, handle_event/3]).
 
+%% exported for mockability in tests (called through ?MODULE)
+-export([file_size/1]).
+
 -ifdef(TEST).
 -compile([export_all]).
 -endif.
