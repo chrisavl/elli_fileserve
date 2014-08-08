@@ -23,13 +23,13 @@ handle(Req, Config) ->
             ignore;
         FilePath ->
             Filename = local_path(Config, FilePath),
-            case file_size(Filename) of
+            case ?MODULE:file_size(Filename) of
                 {error, illegal_path} ->
                     {403, [], <<"Not Allowed">>};
                 {error, _Reason} ->
                     {404, [], <<"File Not Found">>};
                 {ok, Size} ->
-                    {200, headers(Filename, Size), {file, Filename}}
+                    {200, headers(Filename, Size, charset(Config)), {file, Filename}}
             end
     end.
 
@@ -48,6 +48,9 @@ path(Config) ->
 
 prefix(Config) ->
     proplists:get_value(prefix, Config, <<>>).
+
+charset(Config) ->
+    proplists:get_value(charset, Config).
 
 %%
 %% Helpers
@@ -108,13 +111,18 @@ file_size(Filename) ->
             {error, invalid_file}
     end.
 
-headers(Filename, Size) ->
+headers(Filename, Size, Charset) ->
     case mime_type(Filename) of
         undefined ->
             [{"Content-Length", Size}];
         MimeType ->
-            [{"Content-Length", Size}, {"Content-Type", MimeType}]
+            [{"Content-Length", Size}, {"Content-Type", content_type(MimeType, Charset)}]
     end.
+
+content_type(MimeType, undefined) ->
+    MimeType;
+content_type(MimeType, Charset) ->
+    MimeType ++ "; charset=" ++ Charset.
 
 %%
 %% Mime types

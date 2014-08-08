@@ -6,10 +6,13 @@
 -define(TEST(FunName, Arg), {lists:flatten(io_lib:format("~s ~p", [FunName, Arg])), ?_test(FunName(Arg))}).
 
 test_setup() ->
-    meck:new(elli_request).
+    Mods = [ [elli_fileserve, [passthrough]]
+           , [elli_request]
+           ],
+    [ {hd(Args), apply(meck, new, Args)} || Args <- Mods ].
 
-test_teardown(_) ->
-    meck:unload(elli_request).
+test_teardown(Mods) ->
+    [ meck:unload(Mod) || {Mod, ok} <- Mods ].
 
 handle_test_() ->
     [{setup, local,
@@ -20,7 +23,10 @@ handle_test_() ->
        ?TEST(test_for_prefix, {regex, <<"^/p.+x/">>}),
        ?TEST(test_for_regex_prefix, <<".+/assets">>),
        ?TEST(test_for_regex_prefix, <<".+/assets/">>),
-       ?TEST(test_for_regex_prefix, <<"/[^/]+/[^/]+/assets/">>)
+       ?TEST(test_for_regex_prefix, <<"/[^/]+/[^/]+/assets/">>),
+       ?_test(test_default_charset()),
+       ?_test(test_undefined_charset()),
+       ?_test(test_charset_config())
        ]
      }].
 
@@ -49,6 +55,38 @@ test_for_regex_prefix(Prefix) ->
     ExpectedFile = filename:join([?TEST_DIR, ?TEST_FILE]),
     ?assertMatch({200, [{"Content-Length", _}], {file, ExpectedFile}},
                  elli_fileserve:handle(req, Config)).
+
+
+test_default_charset() ->
+    Config = [],
+    meck:expect(elli_request, raw_path, 1, <<"/test.js">>),
+    meck:expect(elli_fileserve, file_size, 1, {ok, 0}),
+    ?assertMatch({200,
+                  [{"Content-Length", 0},
+                   {"Content-Type", "application/javascript"}],
+                  {file, _}},
+                 elli_fileserve:handle(req, Config)).
+
+test_undefined_charset() ->
+    Config = [{charset, undefined}],
+    meck:expect(elli_request, raw_path, 1, <<"/test.js">>),
+    meck:expect(elli_fileserve, file_size, 1, {ok, 0}),
+    ?assertMatch({200,
+                  [{"Content-Length", 0},
+                   {"Content-Type", "application/javascript"}],
+                  {file, _}},
+                 elli_fileserve:handle(req, Config)).
+
+test_charset_config() ->
+    Config = [{charset, "mycharset"}],
+    meck:expect(elli_request, raw_path, 1, <<"/test.js">>),
+    meck:expect(elli_fileserve, file_size, 1, {ok, 0}),
+    ?assertMatch({200,
+                  [{"Content-Length", 0},
+                   {"Content-Type", "application/javascript; charset=mycharset"}],
+                  {file, _}},
+                 elli_fileserve:handle(req, Config)).
+
 
 mime_type_test() ->
     ?assertEqual("text/plain", elli_fileserve:mime_type(<<"/some/file.txt">>)),
