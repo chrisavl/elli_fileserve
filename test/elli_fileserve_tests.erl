@@ -27,7 +27,7 @@ handle_test_() ->
        ?_test(test_default_charset()),
        ?_test(test_undefined_charset()),
        ?_test(test_charset_config())
-       ]
+      ]
      }].
 
 test_for_prefix(Prefix) ->
@@ -112,4 +112,25 @@ local_path_test_() ->
       ?_assertEqual(undefined,
                     elli_fileserve:local_path([{path, <<"/test/">>},
                                                {default, <<"index.xhtml">>}],
-                                              <<"../">>))}].
+                                              <<"../">>))},
+     {"Should serve absolute paths relative to 'path' directory",
+      ?_assertEqual(<<"/test/etc/passwd">>,
+                    elli_fileserve:local_path([{path, <<"/test">>}],
+                                              <<"/etc/passwd">>))}].
+
+unprefix_test_() ->
+    [{"Empty prefix",
+      ?_assertEqual(<<"/etc/passwd">>,
+                    elli_fileserve:unprefix(<<"/etc/passwd">>, <<"">>))},
+     {"Simple slash",
+      ?_assertEqual(<<"etc/passwd">>,
+                    elli_fileserve:unprefix(<<"/etc/passwd">>, <<"/">>))},
+     {"Prefix",
+      ?_assertEqual(<<"/etc/passwd">>,
+                    elli_fileserve:unprefix(<<"/prefix/etc/passwd">>, <<"/prefix">>))},
+     {"Prefix",
+      ?_assertEqual(<<"etc/passwd">>,
+                    elli_fileserve:unprefix(<<"/prefix/etc/passwd">>, <<"/prefix/">>))},
+     {"Regex prefix",
+      ?_assertEqual(<<"etc/passwd">>,
+                    elli_fileserve:unprefix(<<"/prefix/etc/passwd">>, {regex, <<"^/p.+x/">>}))}].
