@@ -64,24 +64,20 @@ unprefix(RawPath, {regex, Prefix}) ->
         nomatch ->
             undefined;
         _Result ->
-            case re:replace(RawPath, Prefix, "", [{return, binary}]) of
-                <<$/, File/binary>> ->
-                    File;
-                Else ->
-                    Else
-            end
+            re:replace(RawPath, Prefix, "", [{return, binary}])
     end;
 
 unprefix(RawPath, Prefix) ->
     PrefixSz = size(Prefix),
     case RawPath of
-        <<Prefix:PrefixSz/binary, $/, File/binary>> ->
-            File;
         <<Prefix:PrefixSz/binary, File/binary>> ->
             File;
         _ ->
             undefined
     end.
+
+local_path(Config, <<"/", File/binary>>) ->
+    local_path(Config, File);
 
 local_path(Config, <<"">>) ->
     filename:join(filename:flatten([path(Config), default(Config)]));
